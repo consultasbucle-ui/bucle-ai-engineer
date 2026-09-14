@@ -1,0 +1,18 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Sistema operativo / editores
+.DS_Store
+.vscode/
+.idea/
