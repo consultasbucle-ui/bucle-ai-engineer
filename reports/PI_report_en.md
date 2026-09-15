@@ -1,5 +1,20 @@
 # Informe Breve — Proyecto Integrador M1: AI Support Assistant
 
+## 0. Contexto de negocio
+
+Este proyecto es un caso de uso real dentro de **Bucle**, plataforma de
+turnos/agenda para negocios de servicios (peluquerías, canchas,
+consultorios, etc.). El equipo de soporte de Bucle responde consultas de
+los dueños de esos negocios sobre el uso de la plataforma, y no da abasto
+a medida que crece la base de usuarios. Este asistente hace una primera
+pasada automática sobre esas consultas: responde lo que puede resolver
+solo y deja explícito cuándo una consulta necesita intervención humana.
+El **usuario final** de la aplicación no es el dueño del negocio que
+escribe la consulta (cliente indirecto), sino el **agente de soporte de
+Bucle** (o el sistema que usa ese equipo), que consume la respuesta
+estructurada para decidir si puede cerrar la consulta o si tiene que
+intervenir.
+
 ## 1. Arquitectura
 
 El sistema es un servicio de línea de comandos (`src/run_query.py`) con tres
