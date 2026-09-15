@@ -5,6 +5,27 @@ una respuesta estructurada en JSON (`answer`, `confidence`, `actions`) lista
 para que un sistema downstream la consuma sin transformaciones adicionales,
 junto con métricas de costo, tokens y latencia de cada ejecución.
 
+## Contexto de negocio
+
+Este proyecto está pensado como un caso de uso real dentro de **Bucle**, la
+plataforma de turnos/agenda para negocios de servicios (peluquerías,
+canchas, consultorios, etc.). Bucle tiene un equipo chico de soporte que
+responde consultas de los dueños de esos negocios sobre el uso de la
+plataforma: cómo configurar turnos, problemas de cobro, dudas de la cuenta,
+etc.
+
+**Problema que resuelve la aplicación:** a medida que crece la base de
+usuarios, el equipo de soporte no da abasto respondiendo cada consulta a
+mano. Este asistente hace una primera pasada automática — responde lo que
+puede resolver solo, y deja claro cuándo una consulta necesita intervención
+humana — en vez de que el agente tenga que leer y clasificar cada mensaje
+desde cero.
+
+**Usuario final:** no es el dueño del negocio que escribe la consulta (ese
+es el cliente indirecto), sino el **agente de soporte de Bucle** (o el
+sistema que usa ese equipo), que recibe la respuesta estructurada y decide
+con esa información si puede cerrar la consulta o si tiene que intervenir.
+
 ## Setup
 
 1. Clonar el repo e instalar dependencias:
