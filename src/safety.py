@@ -37,6 +37,11 @@ SUSPICIOUS_PATTERNS = [
 
 _COMPILED_PATTERNS = [re.compile(p, re.IGNORECASE) for p in SUSPICIOUS_PATTERNS]
 
+# Debajo de este largo (en caracteres, ya sin espacios en los extremos) una
+# consulta no tiene contenido suficiente para ameritar gastar una llamada a
+# la API: son ruido ("a", "?", "  ") más que preguntas reales.
+MIN_QUESTION_LENGTH = 3
+
 
 @dataclass
 class SafetyDecision:
@@ -48,12 +53,42 @@ class SafetyDecision:
 
 def check_input(user_question: str) -> SafetyDecision:
     """
-    Revisa la pregunta del usuario en busca de intentos de manipulación
-    antes de mandarla al modelo. Devuelve una SafetyDecision con la
-    decisión tomada y, si corresponde, una respuesta de fallback que ya
-    cumple el contrato JSON del asistente (así el flujo principal no se
-    rompe si el input es bloqueado).
+    Revisa la pregunta del usuario antes de mandarla al modelo. Devuelve una
+    SafetyDecision con la decisión tomada y, si corresponde, una respuesta
+    de fallback que ya cumple el contrato JSON del asistente (así el flujo
+    principal no se rompe si el input es bloqueado).
+
+    Dos motivos de bloqueo, en este orden:
+      1. Entrada vacía o demasiado corta/ambigua: no tiene sentido gastar
+         una llamada a la API (tiempo + costo) para algo que claramente
+         necesita que el usuario aclare su consulta.
+      2. Intento de manipulación / prompt injection (patrones de abajo).
     """
+    stripped = (user_question or "").strip()
+
+    if not stripped:
+        return SafetyDecision(
+            flagged=True,
+            reason="Entrada vacía: no se recibió ninguna consulta.",
+            fallback_response={
+                "answer": "No recibí ninguna consulta para responder. ¿Podrías escribir tu pregunta?",
+                "confidence": 0.9,
+                "actions": ["request_clarification"],
+            },
+        )
+
+    if len(stripped) < MIN_QUESTION_LENGTH:
+        return SafetyDecision(
+            flagged=True,
+            reason=f"Entrada demasiado corta/ambigua ({len(stripped)} caracter(es)): "
+            "no amerita gastar una llamada a la API.",
+            fallback_response={
+                "answer": "Tu consulta es muy corta para entenderla. ¿Podrías darme más detalle?",
+                "confidence": 0.85,
+                "actions": ["request_clarification"],
+            },
+        )
+
     for pattern in _COMPILED_PATTERNS:
         match = pattern.search(user_question)
         if match:
