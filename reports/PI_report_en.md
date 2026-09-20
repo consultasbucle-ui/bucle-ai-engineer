@@ -86,6 +86,34 @@ proyecto contra la API de OpenAI (modelo `gpt-4o-mini`) el 15/09/2026:
   ese intento de manipulación tuvo **costo $0 y latencia 0ms** — la defensa
   en capas no solo es más segura, es más barata.
 
+## 3.5. Mejoras aplicadas tras la devolución del corrector
+
+El proyecto fue validado y aprobado. El corrector dejó tres sugerencias
+para pulirlo; así se abordó cada una:
+
+1. **Guardrails de entrada (prevenir llamadas infructuosas):**
+   `safety.check_input()` ahora bloquea, antes de llamar al modelo, tanto
+   entradas vacías como demasiado cortas/ambiguas (menos de 3 caracteres),
+   además de los intentos de prompt injection que ya cubría. Cada caso
+   devuelve un fallback que cumple el contrato JSON (`actions:
+   ["request_clarification"]`), así que el flujo nunca se rompe y nunca se
+   gasta una llamada a la API en una entrada que claramente necesita
+   aclaración. Cubierto por tests nuevos en `tests/test_core.py`
+   (`test_empty_input_flagged_without_wasting_api_call`,
+   `test_too_short_input_flagged`, `test_none_input_flagged`).
+2. **Trazabilidad:** se agregó un `request_id` (UUID) por ejecución,
+   propagado a `metrics/metrics.csv` (nueva columna) y a logs
+   estructurados en stderr (una línea JSON por evento:
+   `query_received` → `blocked_by_safety` o `calling_llm` →
+   `llm_response_received` → `done`). Se optó por esta base local en vez
+   de integrar Langfuse/LangSmith directamente porque requeriría una
+   cuenta y credenciales externas adicionales; el `request_id` ya generado
+   es exactamente lo que se usaría como trace id si se conecta una de esas
+   herramientas más adelante.
+3. **`.env.example`:** ya existía en la raíz del repo con la estructura de
+   variables (`OPENAI_API_KEY`, `OPENAI_MODEL`) documentada — no requirió
+   cambios.
+
 ## 4. Desafíos
 
 - **Confiar en el formato de salida del modelo:** aunque Structured Outputs
@@ -115,3 +143,7 @@ proyecto contra la API de OpenAI (modelo `gpt-4o-mini`) el 15/09/2026:
   lo esperado): medir cuánto es overhead de red vs. tiempo de generación
   del modelo, y evaluar `gpt-4o-mini` con `max_tokens` más ajustado o
   streaming de la respuesta si el caso de uso lo permite.
+- Conectar el `request_id` que ya se genera por ejecución con una
+  herramienta de observabilidad externa (Langfuse o LangSmith) para
+  trazabilidad avanzada — la base local (logs estructurados + metrics.csv)
+  ya está lista para eso, solo falta la integración con la cuenta externa.
