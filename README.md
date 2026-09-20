@@ -119,10 +119,21 @@ pytest tests/test_core.py -v
   además se valida manualmente (`schema.py`) por si el modelo o el SDK
   cambian de comportamiento — nunca se confía ciegamente en que la API
   devuelva siempre JSON válido.
-- **Seguridad (bonus):** defensa en capas — un filtro de patrones
-  (`safety.py`) detecta intentos de manipulación antes de llamar al modelo
-  (ahorra costo y evita exponer el prompt), y el propio system prompt
-  incluye instrucciones para que el modelo se niegue a romper su rol.
+- **Seguridad (bonus):** defensa en capas — `safety.py` bloquea, antes de
+  llamar al modelo: (1) entradas vacías o demasiado cortas/ambiguas (menos
+  de 3 caracteres), para no gastar una llamada a la API en algo que
+  claramente necesita que el usuario aclare su consulta, y (2) intentos de
+  manipulación / prompt injection (patrones de texto). Además, el propio
+  system prompt incluye instrucciones para que el modelo se niegue a
+  romper su rol.
+- **Trazabilidad:** cada ejecución de `run_query.py` genera un `request_id`
+  único (UUID) que se registra tanto en `metrics/metrics.csv` como en logs
+  estructurados (JSON por línea) a stderr, con eventos de punta a punta
+  (`query_received`, `blocked_by_safety` o `calling_llm` →
+  `llm_response_received`, `done`). Esto permite seguir cualquier consulta
+  de principio a fin y es la base para conectar, a futuro, una herramienta
+  de observabilidad como Langfuse o LangSmith usando `request_id` como
+  trace id.
 
 ## Limitaciones conocidas
 
